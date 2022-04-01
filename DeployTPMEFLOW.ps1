@@ -21,7 +21,6 @@ if ($LASTEXITCODE -ne 0) {
 }
 Write-Host "Tar'ing binaries..." -ForegroundColor "green"
 tar -C ".\tpm-read-nv\bin\Release\net6.0" -cf "tpm-read-nv.tar" linux-x64
-tar -C ".\tpm-write-nv\bin\Release\net6.0" -cf "tpm-write-nv.tar" win-x64
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Error tar'ing binaries." -ForegroundColor "red"
     exit $LASTEXITCODE
