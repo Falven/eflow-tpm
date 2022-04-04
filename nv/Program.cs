@@ -46,13 +46,13 @@ class Program
     {
         string? device = null;
         int? index = null;
-        string? write = null;
+        string? path = null;
         bool read = false;
         bool help = false;
         var options = new OptionSet {
             { "d|device=", GetDeviceOptions(), d => device = d },
             { "i|index=", "Required: The index in TPM memory to read from or write to.", (int i) => index = i },
-            { "w|write=", "Fully qualified path to the file containing data to write to the TPM device.", w => write = w },
+            { "w|write=", "Fully qualified path to the file containing data to write to the TPM device.", w => path = w },
             { "r|read", "Whether to read from the TPM device.", r => read = true },
             { "h|help", h => help = true },
         };
@@ -105,13 +105,18 @@ class Program
                     tpm.Startup(Su.Clear);
                 }
 
-                if (write != null)
+                if (path != null)
                 {
                     if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                     {
                         throw new InvalidOperationException("Writing to TPM is currently unsupported under this platform.");
                     }
-                    NVWrite(write, tpm);
+                    if (!File.Exists(path))
+                    {
+                        throw new FileNotFoundException("Could not find file to write to TPM.", write);
+                    }
+
+                    NVWrite(path, tpm);
                 }
 
                 if (read)
