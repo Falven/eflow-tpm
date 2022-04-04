@@ -52,17 +52,7 @@ class Program
     /// </summary>
     static void WriteUsage()
     {
-        Console.WriteLine();
-        Console.WriteLine("Usage: NV [<device>]");
-        Console.WriteLine();
-        Console.WriteLine("    <device> can be '{0}' or '{1}' or '{2}'. Defaults to '{3}'.", DeviceLinux, DeviceWinTbs, DeviceSimulator, DefaultDevice);
-        Console.WriteLine("        If <device> is '{0}', the program will connect to the TPM via\n" +
-                    "        the TPM2 Access Broker on the EFLOW VM.", DeviceLinux);
-        Console.WriteLine("        If <device> is '{0}', the program will connect to a simulator\n" +
-                            "        listening on a TCP port.", DeviceSimulator);
-        Console.WriteLine("        If <device> is '{0}', the program will use the Windows TBS interface to talk\n" +
-                            "        to the TPM device (for use on testing within the Windows Host).", DeviceWinTbs);
-    }
+    }  
 
     /// <summary>
     /// Parse the arguments of the program and return the selected values.
@@ -101,23 +91,23 @@ class Program
         try
         {
             Tpm2Device tpmDevice;
-            tpmDevice = new LinuxTpmDevice();
-            /*
-                        switch (tpmDeviceName)
-                        {
-                            case DeviceSimulator:
-                                tpmDevice = new TcpTpmDevice(DefaultSimulatorName, DefaultSimulatorPort);
-                                break;
-                            case DeviceWinTbs:
+                    tpmDevice = new LinuxTpmDevice();
+/*
+            switch (tpmDeviceName)
+            {
+                case DeviceSimulator:
+                    tpmDevice = new TcpTpmDevice(DefaultSimulatorName, DefaultSimulatorPort);
+                    break;
+                case DeviceWinTbs:
 
-                                break;
-                            case DeviceLinux:
-                                tpmDevice = new LinuxTpmDevice();
-                                break;
-                            default:
-                                throw new Exception("Unknown device selected.");
-                        }
-            */
+                    break;
+                case DeviceLinux:
+                    tpmDevice = new LinuxTpmDevice();
+                    break;
+                default:
+                    throw new Exception("Unknown device selected.");
+            }
+*/
             tpmDevice.Connect();
 
             var tpm = new Tpm2(tpmDevice);
@@ -133,9 +123,11 @@ class Program
             }
 
 
-            int index = args[0].Length > 0 ? Int32.Parse(args[0]) : 31337;
-
-            NVReadOnly(tpm, index);
+		int index = args[0].Length > 0 ? Int32.Parse(args[0]) : 31337;
+		string fileName = args[1];
+		int lenght = Int32.Parse(args[2]);
+		   
+            NVReadOnly(tpm, index, fileName, length);
 
             // TPM clean up procedure 
             tpm.Dispose();
@@ -144,9 +136,6 @@ class Program
         {
             Console.WriteLine("Exception occurred: {0}", e.Message);
         }
-
-        Console.WriteLine("Press Any Key to continue.");
-        Console.ReadLine();
     }
 
 
@@ -158,7 +147,7 @@ class Program
     /// for details.
     /// </summary>
     /// <param name="tpm">Reference to TPM object.</param>
-    static void NVReadOnly(Tpm2 tpm, int index)
+    static void NVReadOnly(Tpm2 tpm, int index, string fileName, int length)
     {
         //
         // AuthValue encapsulates an authorization value: essentially a byte-array.
@@ -170,13 +159,12 @@ class Program
         //
 
         int nvIndex = index; // Arbitrarily Chosen
-        ushort dataLength = 8; // Length from the data stored into the TPM
-
+        ushort dataLength = length; // Length from the data stored into the TPM
 
         TpmHandle nvHandle = TpmHandle.NV(nvIndex);
         AuthValue nvAuth = new AuthValue(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 });
-        Console.WriteLine("Reading NVIndex {0}.", nvIndex);
         byte[] nvRead = tpm[nvAuth].NvRead(nvHandle, nvHandle, dataLength, 0);
-        Console.WriteLine("Read Bytes: {0}", BitConverter.ToString(nvRead));
+	  File.WriteAllBytes(fileName, nvRead);
+        Console.WriteLine("Read Bytes: {0}", nvRead.Length);
     }
 }
