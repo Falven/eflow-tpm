@@ -47,7 +47,13 @@ namespace NVWindows
                 //
                 // Run test
                 //
-                NvReadWriteWithOwnerAuth(tpm);
+                int index = args[0].Length > 0 ? Int32.Parse(args[0]) : 31337;
+
+
+                byte[] key = System.IO.File.ReadAllBytes(args[1]);
+                Console.WriteLine("DEBUG: " + args[1]);
+
+                NvReadWriteWithOwnerAuth(index, key, tpm);
 
                 //
                 // Clean up.
@@ -68,14 +74,14 @@ namespace NVWindows
         /// This sample demonstrates the creation and use of TPM NV-storage
         /// </summary>
         /// <param name="tpm">Reference to TPM object.</param>
-        static void NvReadWriteWithOwnerAuth(Tpm2 tpm)
+        static void NvReadWriteWithOwnerAuth(int index, byte[] key, Tpm2 tpm)
         {
             if (tpm._GetUnderlyingDevice().GetType() != typeof(TbsDevice))
             {
                 return;
             }
 
-            int nvIndex = 3001; // arbitrarely chosen
+            int nvIndex = index; // arbitrarely chosen
             TpmHandle nvHandle = TpmHandle.NV(nvIndex);
             //
             // The NV auth value is required to read and write the NV slot after it has been
@@ -90,7 +96,9 @@ namespace NVWindows
             // which requires storage of the authorization value for reads.
             //
             AuthValue nvAuth = new AuthValue(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 });
-            var nvData = new byte[] { 7, 6, 5, 4, 3, 2, 1, 0 };
+            var nvData = key;
+
+            Console.WriteLine("DEBUG: " + key);
 
             WindowsIdentity identity = WindowsIdentity.GetCurrent();
             WindowsPrincipal principal = new WindowsPrincipal(identity);

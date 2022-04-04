@@ -48,7 +48,7 @@ class Program
     private const int DefaultSimulatorPort = 2321;
 
     /// <summary>
-    /// Prints instructions for usage of this program.
+    /// Prints instructions for usage of this progsram.
     /// </summary>
     static void WriteUsage()
     {
@@ -73,26 +73,7 @@ class Program
     /// argument was present.</returns>
     static bool ParseArguments(IEnumerable<string> args, out string tpmDeviceName)
     {
-        tpmDeviceName = DefaultDevice;
-        foreach (string arg in args)
-        {
-            if (string.Compare(arg, DeviceSimulator, true) == 0)
-            {
-                tpmDeviceName = DeviceSimulator;
-            }
-            else if (string.Compare(arg, DeviceWinTbs, true) == 0)
-            {
-                tpmDeviceName = DeviceWinTbs;
-            }
-            else if (string.Compare(arg, DeviceLinux, true) == 0)
-            {
-                tpmDeviceName = DeviceLinux;
-            }
-            else
-            {
-                return false;
-            }
-        }
+        tpmDeviceName = "";
         return true;
     }
 
@@ -110,30 +91,33 @@ class Program
         // the program terminates.
         // 
         string tpmDeviceName;
+        tpmDeviceName = DeviceLinux;
         if (!ParseArguments(args, out tpmDeviceName))
         {
-            WriteUsage();
-            return;
+            //WriteUsage();
+            //return;                                                                                                                                                                   
         }
 
         try
         {
             Tpm2Device tpmDevice;
-            switch (tpmDeviceName)
-            {
-                case DeviceSimulator:
-                    tpmDevice = new TcpTpmDevice(DefaultSimulatorName, DefaultSimulatorPort);
-                    break;
-                case DeviceWinTbs:
-                    tpmDevice = new TbsDevice();
-                    break;
-                case DeviceLinux:
-                    tpmDevice = new LinuxTpmDevice();
-                    break;
-                default:
-                    throw new Exception("Unknown device selected.");
-            }
+            tpmDevice = new LinuxTpmDevice();
+            /*
+                        switch (tpmDeviceName)
+                        {
+                            case DeviceSimulator:
+                                tpmDevice = new TcpTpmDevice(DefaultSimulatorName, DefaultSimulatorPort);
+                                break;
+                            case DeviceWinTbs:
 
+                                break;
+                            case DeviceLinux:
+                                tpmDevice = new LinuxTpmDevice();
+                                break;
+                            default:
+                                throw new Exception("Unknown device selected.");
+                        }
+            */
             tpmDevice.Connect();
 
             var tpm = new Tpm2(tpmDevice);
@@ -148,7 +132,10 @@ class Program
                 tpm.Startup(Su.Clear);
             }
 
-            NVReadOnly(tpm);
+
+            int index = args[0].Length > 0 ? Int32.Parse(args[0]) : 31337;
+
+            NVReadOnly(tpm, index);
 
             // TPM clean up procedure 
             tpm.Dispose();
@@ -171,7 +158,7 @@ class Program
     /// for details.
     /// </summary>
     /// <param name="tpm">Reference to TPM object.</param>
-    static void NVReadOnly(Tpm2 tpm)
+    static void NVReadOnly(Tpm2 tpm, int index)
     {
         //
         // AuthValue encapsulates an authorization value: essentially a byte-array.
@@ -182,7 +169,7 @@ class Program
         // authorization value from the registry.
         //
 
-        int nvIndex = 3001; // Arbitrarily Chosen
+        int nvIndex = index; // Arbitrarily Chosen
         ushort dataLength = 8; // Length from the data stored into the TPM
 
 
