@@ -264,7 +264,7 @@ namespace NVWindows
 
             return true;
         }
-    } // class Program
+    }
 
     internal class TbsWrapper
     {
@@ -332,5 +332,5 @@ namespace NVWindows
             IncludeTpm12 = 0x00000002,
             IncludeTpm20 = 0x00000004,
         }
-    } // class TbsWrapper
+    }
 }

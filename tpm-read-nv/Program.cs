@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Tpm2Lib;
+using Mono.Options;
 
 class Program
 {
@@ -53,7 +54,7 @@ class Program
     static void WriteUsage()
     {
         Console.WriteLine();
-        Console.WriteLine("Usage: NV [<device>]");
+        Console.WriteLine("Usage: {0} [OPTIONS]", System.Reflection.Assembly.GetExecutingAssembly());
         Console.WriteLine();
         Console.WriteLine("    <device> can be '{0}' or '{1}' or '{2}'. Defaults to '{3}'.", DeviceLinux, DeviceWinTbs, DeviceSimulator, DefaultDevice);
         Console.WriteLine("        If <device> is '{0}', the program will connect to the TPM via\n" +
@@ -104,6 +105,25 @@ class Program
     /// <param name="args">Arguments to this program.</param>
     static void Main(string[] args)
     {
+        // these variables will be set when the command line is parsed
+        var verbosity = 0;
+        var shouldShowHelp = false;
+        var repeat = 1;
+        string? device = null;
+        // these are the available options, note that they set the variables
+        var options = new OptionSet {
+            { 
+                "d|device=",
+                String.Format("can be '{0}' or '{1}' or '{2}'. Defaults to '{3}'.", DeviceLinux, DeviceWinTbs, DeviceSimulator, DefaultDevice),
+                d => device = d
+            },
+            { "i|index=", "The index in TPM Memory to read/write to/from.", (int r) => repeat = r },
+            { "r|read=", "Whether to read from the TPM device.", (int r) => repeat = r },
+            { "w|write=", "Whether to write to the TPM device.", (int r) => repeat = r },
+            { "v", "increase debug message verbosity", v => { if (v != null) ++verbosity; } },
+            { "h|help", "show this message and exit", h => shouldShowHelp = h != null },
+        };
+
         //
         // Parse the program arguments. If the wrong arguments are given or
         // are malformed, then instructions for usage are displayed and 
@@ -136,32 +156,31 @@ class Program
 
             tpmDevice.Connect();
 
-            var tpm = new Tpm2(tpmDevice);
-            if (tpmDevice is TcpTpmDevice)
+            //
+            // Pass the device object used for communication to the TPM 2.0 object
+            // which provides the command interface. Within using for cleanup.
+            //
+            using (var tpm = new Tpm2(tpmDevice))
             {
-                //
-                // If we are using the simulator, we have to do a few things the
-                // firmware would usually do. These actions have to occur after
-                // the connection has been established.
-                // 
-                tpmDevice.PowerCycle();
-                tpm.Startup(Su.Clear);
+                if (tpmDevice is TcpTpmDevice)
+                {
+                    //
+                    // If we are using the simulator, we have to do a few things the
+                    // firmware would usually do. These actions have to occur after
+                    // the connection has been established.
+                    // 
+                    tpmDevice.PowerCycle();
+                    tpm.Startup(Su.Clear);
+                }
+
+                NVReadOnly(tpm);
             }
-
-            NVReadOnly(tpm);
-
-            // TPM clean up procedure 
-            tpm.Dispose();
         }
         catch (Exception e)
         {
             Console.WriteLine("Exception occurred: {0}", e.Message);
         }
-
-        Console.WriteLine("Press Any Key to continue.");
-        Console.ReadLine();
     }
-
 
     /// <summary>
     /// This sample demonstrates the creation and use of TPM NV memory storage.
