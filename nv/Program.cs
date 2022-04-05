@@ -277,7 +277,8 @@ class Program
         var nvHandle = TpmHandle.NV(nvIndex);
         var nvAuth = new AuthValue(authValue.ToByteArray());
         var nvData = File.ReadAllBytes(path);
-        var nvDataLengthBytes = BitConverter.GetBytes((ushort)nvData.Length);
+        var nvDataLength = (ushort)nvData.Length;
+        var nvDataLengthBytes = BitConverter.GetBytes((ushort)nvDataLength);
         var nvDataLengthBytesLength = (ushort)nvDataLengthBytes.Length;
         NVAuth(tpm, nvHandle, nvAuth, nvIndex);
         tpm._AllowErrors().NvUndefineSpace(TpmHandle.RhOwner, nvHandle);
@@ -289,12 +290,12 @@ class Program
                 TpmAlgId.Sha1,
                 NvAttr.Authread | NvAttr.Authwrite,
                 new byte[0],
-                (ushort)(nvData.Length + nvDataLengthBytesLength)
+                (ushort)(nvDataLength + nvDataLengthBytesLength)
             )
         );
         LogLine(String.Format("Writing NVIndex {0}.", nvIndex));
         tpm[nvAuth].NvWrite(nvHandle, nvHandle, nvDataLengthBytes, 0);
-        LogLine(String.Format("Wrote nvData length: {0}", nvData.Length));
+        LogLine(String.Format("Wrote nvData length: {0}", nvDataLength));
         tpm[nvAuth].NvWrite(nvHandle, nvHandle, nvData, nvDataLengthBytesLength);
         LogLine(String.Format("Wrote nvData: {0}", BitConverter.ToString(nvData)));
     }
