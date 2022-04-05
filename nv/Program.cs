@@ -121,10 +121,6 @@ class Program
             PrintUsage(options);
             return 1;
         }
-        catch (Exception e)
-        {
-            Console.WriteLine("Exception occurred: {0}", e.Message);
-        }
         return 0;
     }
 
@@ -250,7 +246,7 @@ class Program
         var principal = new WindowsPrincipal(identity);
         if (principal.IsInRole(WindowsBuiltInRole.Administrator))
         {
-            Console.WriteLine("Running as Administrator.");
+            LogLine("Running as Administrator.");
 
             //
             // AuthValue encapsulates an authorization value: essentially a byte-array.
@@ -267,7 +263,7 @@ class Program
             }
             else
             {
-                Console.WriteLine("Could not retrieve owner auth from registry. Trying empty auth.");
+                LogLine("Could not retrieve owner auth from registry. Trying empty auth.");
             }
         }
     }
