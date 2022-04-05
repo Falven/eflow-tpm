@@ -1,3 +1,7 @@
+# nv cli
+
+A cli for reading and writing to EFLOW TPM.
+
 ## Requirements
 
 EFLOW and .NET 6 SDK
@@ -6,42 +10,57 @@ EFLOW and .NET 6 SDK
 
 https://docs.microsoft.com/en-us/azure/iot-edge/how-to-provision-single-device-linux-on-windows-x509?view=iotedge-2020-11&tabs=azure-portal%2Cpowershell#install-iot-edge
 
-Modify EFLOW ps1 to allow TPM2
-
-Add the `-IncludeHidden` flag to all of the `Get-NetAdapter` commandlets in:
-C:\Program Files\WindowsPowerShell\Modules\AzureEFLOW\AzureEFLOW.psm1:3202-3228
-
-Remove-Module AzureEFLOW
-Import-Module AzureEFLOW
-Start-EflowVm
-Set-EflowVmFeature -feature 'DpsTpm' -Enable
-
-https://github.com/microsoft/TSS.MSR/tree/master/TSS.NET/Samples/NV%20(Windows)
-openssh -> generate key
-use cryptsetup to encrypt partition create filsystem...
-use encryption key to decrypt partition
-
-cryptsetup -c aes-xts-plain64 --key-size 512 --hash sha512 --time 5000 --use-urandom /dev/sdb1
-cryptsetup open /dev/sdb1 encrypted
-
-cryptsetup luksFormat --type luks2 /dev/sda10
-cryptsetup luksOpen /dev/sda10 datadrive
-
-echo -e "n\n10\n\n\nw" | sudo fdisk /dev/sda
-sudo cryptsetup luksFormat /dev/sda10
-
-1. Take key we set up partition with cryptsetup.
-2. Write that key from windows with NV R/W tool.
-3. Read that key from the TPM from linux and use it to decrypt partition.
+Run EnableEFLOWTPM.ps1 from an elevated Powershell For Windows session to enable the TPM.
 
 ### .NET Core 6
 
 https://dotnet.microsoft.com/en-us/download/dotnet/6.0
 
+### Building
+
+Run the BuildAndDeployNV.ps1 script from an elevated Powershell For Windows session to build and deploy the cli for both Windows and EFLOW.
+
+The cli will be available from Windows in `C:\path\to\your\repo\eflow-tpm\nv\bin\Release\net6.0\win-x64`
+The cli will be available from the EFLOW VM's home directory in a tar.
+
 ### Running
 
-Run the DeployTPMEFLOW.ps1 script from an elevated Powershell For Windows session.
+Usage statement (`-h -help`):
+
+```text
+This program reads or writes to a TPM 2.0 device.
+After parsing the arguments for the TPM device, the program reads or writes arbitrary data to or from the provided NV index. As of 1.0, this program only supports writing and reading from Windows and only writing from EFLOW/Linux.
+
+  Usage: nv [OPTIONS]
+  -a, --authvalue=VALUE      Authorization GUID used for accessing TPM device
+                               memory.
+  -i, --index[=VALUE]        The index in authorized TPM memory to read from or
+                               write to (Defaults to 3001).
+  -w, --write[=VALUE]        Fully qualified path to a file containing data to
+                               write to TPM device memory.
+  -r, --read                 Whether to read from the TPM device.
+  -v, --verbose
+  -h, --help
+
+  Example: nv -a=1be4e78e-01fb-4935-ac07-9128cfb18ba1 -r -v
+```
+
+#### Examples
+
+```powershell
+PS C:\> .\nv.exe -a=1be4e78e-01fb-4935-ac07-9128cfb18ba1 -w=C:\\source\\repos\\eflow-tpm\\test-key -v
+Running as Administrator.
+Writing NVIndex 3001.
+Wrote nvData length: 8
+Wrote nvData: 31-32-33-34-35-36-37-38
+PS C:\> .\nv.exe -a=1be4e78e-01fb-4935-ac07-9128cfb18ba1 -r -v
+Reading NVIndex 3001.
+Read Data length: 8
+Read Bytes: 31-32-33-34-35-36-37-38
+12345678
+```
 
 ### Known issues
 
 Does not work from Powershell Core.
+Weird internal print statemtents on Linux.

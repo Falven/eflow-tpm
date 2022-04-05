@@ -281,8 +281,7 @@ class Program
     private static void PrintUsage(OptionSet options)
     {
         Console.WriteLine(@"This program reads or writes to a TPM 2.0 device.
-After parsing the arguments for the TPM device, the program reads or writes arbitrary data to or from the provided NV index.
-As of 1.0, this program only supports writing and reading from Windows and only writing from EFLOW/Linux.
+After parsing the arguments for the TPM device, the program reads or writes arbitrary data to or from the provided NV index. As of 1.0, this program only supports writing and reading from Windows and only reading from EFLOW/Linux.
 
   Usage: nv [OPTIONS]");
         options.WriteOptionDescriptions(Console.Out);
