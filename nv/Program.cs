@@ -14,49 +14,36 @@ class Program
     private const string DeviceLinux = "tpm0";
 
     /// <summary>
-    /// Defines the argument to use to have this program use a TCP connection
-    /// to communicate with a TPM 2.0 simulator.
-    /// </summary>
-    private const string DeviceSimulator = "tcp";
-
-    /// <summary>
     /// Defines the argument to use to have this program use the Windows TBS
     /// API to communicate with a TPM 2.0 device.
     /// Use this device if you are testing the TPM Read functionality on the Windows host.
     /// </summary>
     private const string DeviceWinTbs = "tbs";
 
-
     /// <summary>
     /// The default connection to use for communication with the TPM.
     /// </summary>
     private const string DefaultDevice = DeviceLinux;
 
-    /// <summary>
-    /// If using a TCP connection, the default DNS name/IP address for the
-    /// simulator.
-    /// </summary>
-    private const string DefaultSimulatorName = "127.0.0.1";
+    private const int DefaultNVIndex = 3001;
 
-    /// <summary>
-    /// If using a TCP connection, the default TCP port of the simulator.
-    /// </summary>
-    private const int DefaultSimulatorPort = 2321;
-
-    private const int DefaultAuthValueSize = 32;
+    private static bool verbose = false;
 
     static int Main(string[] args)
     {
-        string? device = null;
-        int? index = null;
+        Guid? authValue = null;
+        string? device = DefaultDevice;
+        int index = DefaultNVIndex;
         string? path = null;
         bool read = false;
         bool help = false;
         var options = new OptionSet {
-            { "d|device=", GetDeviceOptions(), d => device = d },
-            { "i|index=", "Required: The index in TPM memory to read from or write to.", (int i) => index = i },
-            { "w|write=", "Fully qualified path to the file containing data to write to the TPM device.", w => path = w },
+            { "a|authvalue=", "Authorization GUID used for accessing TPM device memory.", a => authValue = Guid.Parse(a) },
+            { "d|device:", GetDeviceOptions(), d => device = d },
+            { "i|index:", String.Format("The index in authorized TPM memory to read from or write to (Defaults to {0}).", DefaultNVIndex), (int i) => index = i },
+            { "w|write:", "Fully qualified path to a file containing data to write to TPM device memory.", w => path = w },
             { "r|read", "Whether to read from the TPM device.", r => read = true },
+            { "v|verbose", v => verbose = true },
             { "h|help", h => help = true },
         };
 
@@ -78,26 +65,26 @@ class Program
                 return 0;
             }
 
-            if (device == null)
+            if (authValue == null)
             {
-                throw new InvalidOperationException("Missing required option -d");
-            }
-
-            if (index == null)
-            {
-                throw new InvalidOperationException("Missing required option -i");
+                throw new InvalidOperationException("Invalid authvalue option -a.");
             }
 
             Tpm2Device tpmDevice;
             switch (device)
             {
-                case DeviceSimulator:
-                    tpmDevice = new TcpTpmDevice(DefaultSimulatorName, DefaultSimulatorPort);
-                    break;
                 case DeviceWinTbs:
+                    if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    {
+                        throw new InvalidOperationException(String.Format("Device {0} is not supported for this platform.", device));
+                    }
                     tpmDevice = new TbsDevice();
                     break;
                 case DeviceLinux:
+                    if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                    {
+                        throw new InvalidOperationException(String.Format("Device {0} is not supported for this platform.", device));
+                    }
                     tpmDevice = new LinuxTpmDevice();
                     break;
                 default:
@@ -108,29 +95,24 @@ class Program
 
             using (var tpm = new Tpm2(tpmDevice))
             {
-                if (tpmDevice is TcpTpmDevice)
-                {
-                    tpmDevice.PowerCycle();
-                    tpm.Startup(Su.Clear);
-                }
-
                 if (path != null)
                 {
-                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                    if (tpm._GetUnderlyingDevice().GetType() != typeof(TbsDevice))
                     {
-                        throw new InvalidOperationException("Writing to TPM is currently not supported under this platform.");
+                        throw new InvalidOperationException("Writing to this device type is currently not supported.");
                     }
+
                     if (!File.Exists(path))
                     {
                         throw new FileNotFoundException("Could not find file to write to TPM.", path);
                     }
 
-                    NVWrite(tpm, (int)index, path);
+                    NVAuthWrite(tpm, (Guid)authValue, index, path);
                 }
 
                 if (read)
                 {
-                    NVRead(tpm, (int)index);
+                    NVRead(tpm, (Guid)authValue, index);
                 }
             }
         }
@@ -262,33 +244,13 @@ class Program
         return true;
     }
 
-    private static void NVWrite(Tpm2 tpm, int nvIndex, string path)
+    private static void NVAuth(Tpm2 tpm, TpmHandle nvHandle, AuthValue nvAuth, int nvIndex)
     {
-        if (tpm._GetUnderlyingDevice().GetType() != typeof(TbsDevice))
-        {
-            return;
-        }
-
-        TpmHandle nvHandle = TpmHandle.NV(nvIndex);
-        //
-        // The NV auth value is required to read and write the NV slot after it has been
-        // created. Because this test is supposed to be used in different conditions:
-        // first as Administrator to create the NV slot, and then as Standard User to read
-        // it, the test uses a well defined authorization value.
-        //
-        // In a real world scenario, tha authorization value should be bigger and random,
-        // or include a policy with better policy. For example, the next line could be
-        // substitued with:
-        // AuthValue nvAuth = AuthValue.FromRandom(32);
-        // which requires storage of the authorization value for reads.
-        //
-        AuthValue nvAuth = AuthValue.FromRandom(DefaultAuthValueSize);
-
         var identity = WindowsIdentity.GetCurrent();
         var principal = new WindowsPrincipal(identity);
         if (principal.IsInRole(WindowsBuiltInRole.Administrator))
         {
-            Console.WriteLine("Running as Administrator. Deleting and re-creating NV entry.");
+            Console.WriteLine("Running as Administrator.");
 
             //
             // AuthValue encapsulates an authorization value: essentially a byte-array.
@@ -307,99 +269,62 @@ class Program
             {
                 Console.WriteLine("Could not retrieve owner auth from registry. Trying empty auth.");
             }
-
-            bool failed;
-            do
-            {
-                failed = false;
-                //
-                // Clean up any slot that was left over from an earlier run.
-                // Only clean up the nvIndex if data from a possible previous invocation
-                // should be deleted.
-                //
-                // Another approach could be to invoke NvDefineSpace, check if the call
-                // returns TpmRc.NvDefined, then try a read with the known/stored
-                // NV authorization value. If that succeeds, the likelyhood that this
-                // NV index already contains valid data is high.
-                // 
-                tpm._AllowErrors().NvUndefineSpace(TpmHandle.RhOwner, nvHandle);
-
-                //
-                // Define the NV slot. The authorization passed in as nvAuth will be
-                // needed for future NvRead and NvWrite access. (Attribute Authread
-                // specifies that authorization is required to read. Attribute Authwrite
-                // specifies that authorization is required to write.)
-                // 
-                try
-                {
-                    tpm.NvDefineSpace(TpmHandle.RhOwner, nvAuth,
-                                             new NvPublic(nvHandle, TpmAlgId.Sha1,
-                                                          NvAttr.Authread | NvAttr.Authwrite,
-                                                          new byte[0], 32));
-                }
-                catch (TpmException e)
-                {
-                    if (e.RawResponse == TpmRc.NvDefined)
-                    {
-                        nvIndex++;
-                        nvHandle = TpmHandle.NV(nvIndex);
-                        Console.WriteLine("NV index already taken, trying next.");
-                        failed = true;
-                    }
-                    else
-                    {
-                        Console.WriteLine("Exception {0}\n{1}", e.Message, e.StackTrace);
-                        return;
-                    }
-                }
-
-                //
-                // Store successful nvIndex and nvAuth, so next invocation as client
-                // knows which index to read. For instance in registry. Storage of 
-                // nvAuth is only required if attributes of NvDefineSpace include 
-                // NvAttr.Authread.
-                // 
-            } while (failed);
-
-            var nvData = File.ReadAllBytes(path);
-
-            //
-            // Now that NvDefineSpace succeeded, write some random data (nvData) to
-            // nvIndex. Note that NvDefineSpace defined the NV slot to be 32 bytes,
-            // so a NvWrite (nor NvRead) should try to write more than that.
-            // If more data has to be written to the NV slot, NvDefineSpace should
-            // be adjusted accordingly.
-            // 
-            Console.WriteLine("Writing NVIndex {0}.", nvIndex);
-            var nvLengthBytes = BitConverter.GetBytes(nvData.Length);
-            tpm[nvAuth].NvWrite(nvHandle, nvHandle, nvLengthBytes, 0);
-            Console.WriteLine("Wrote nvData length: {0}", BitConverter.ToString(nvData));
-            tpm[nvAuth].NvWrite(nvHandle, nvHandle, nvData, (ushort)(nvLengthBytes.Length - 1));
-            Console.WriteLine("Wrote nvData: {0}", BitConverter.ToString(nvData));
         }
-
-        Console.WriteLine("NV access complete.");
     }
 
-    private static void NVRead(Tpm2 tpm, int index)
+    private static void NVAuthWrite(Tpm2 tpm, Guid authValue, int nvIndex, string path)
     {
-        var nvHandle = TpmHandle.NV(index);
-        var nvAuth = AuthValue.FromRandom(DefaultAuthValueSize);
-        Console.WriteLine("Reading NVIndex {0}.", index);
-        var nvLengthBytes = tpm[nvAuth].NvRead(nvHandle, nvHandle, (ushort)sizeof(ushort), 0);
-        var nvLength = BitConverter.ToUInt16(nvLengthBytes);
-        Console.WriteLine("Read Data length: {0}\nReading key.", nvLength);
-        var nvData = tpm[nvAuth].NvRead(nvHandle, nvHandle, ushort.MaxValue, (ushort)(nvLength - 1));
-        Console.WriteLine("Read Bytes: {0}", BitConverter.ToString(nvData));
+        var nvHandle = TpmHandle.NV(nvIndex);
+        var nvAuth = new AuthValue(authValue.ToByteArray());
+        var nvData = File.ReadAllBytes(path);
+        var nvDataLengthBytes = BitConverter.GetBytes((ushort)nvData.Length);
+        var nvDataLengthBytesLength = (ushort)nvDataLengthBytes.Length;
+        NVAuth(tpm, nvHandle, nvAuth, nvIndex);
+        tpm._AllowErrors().NvUndefineSpace(TpmHandle.RhOwner, nvHandle);
+        tpm.NvDefineSpace(
+            TpmHandle.RhOwner,
+            nvAuth,
+            new NvPublic(
+                nvHandle,
+                TpmAlgId.Sha1,
+                NvAttr.Authread | NvAttr.Authwrite,
+                new byte[0],
+                (ushort)(nvData.Length + nvDataLengthBytesLength)
+            )
+        );
+        LogLine(String.Format("Writing NVIndex {0}.", nvIndex));
+        tpm[nvAuth].NvWrite(nvHandle, nvHandle, nvDataLengthBytes, 0);
+        LogLine(String.Format("Wrote nvData length: {0}", nvData.Length));
+        tpm[nvAuth].NvWrite(nvHandle, nvHandle, nvData, nvDataLengthBytesLength);
+        LogLine(String.Format("Wrote nvData: {0}", BitConverter.ToString(nvData)));
+    }
+
+    private static void NVRead(Tpm2 tpm, Guid authValue, int nvIndex)
+    {
+        var nvHandle = TpmHandle.NV(nvIndex);
+        var nvAuth = new AuthValue(authValue.ToByteArray());
+        LogLine(String.Format("Reading NVIndex {0}.", nvIndex));
+        var nvDataLengthBytes = tpm[nvAuth].NvRead(nvHandle, nvHandle, (ushort)sizeof(ushort), 0);
+        var nvDataLength = BitConverter.ToUInt16(nvDataLengthBytes);
+        LogLine(String.Format("Read Data length: {0}", nvDataLength));
+        var nvData = tpm[nvAuth].NvRead(nvHandle, nvHandle, nvDataLength, (ushort)sizeof(ushort));
+        LogLine(String.Format("Read Bytes: {0}", BitConverter.ToString(nvData)));
+    }
+
+    private static void LogLine(string message)
+    {
+        if (verbose)
+        {
+            Console.WriteLine(message);
+        }
     }
 
     private static string GetDeviceOptions()
     {
-        return String.Format("Required: Can be '{0}' or '{1}' or '{2}'. Defaults to '{3}'." +
+        return String.Format("Required: Can be '{0}' or '{1}' (Defaults to '{2}')." +
             " If <device> is '{0}', the program will connect to the TPM via the TPM2 Access Broker on the EFLOW VM." +
-            " If <device> is '{1}', the program will connect to a simulator listening on a TCP port." +
-            " If <device> is '{2}', the program will use the Windows TBS interface to talk to the TPM device (for use on testing within the Windows Host).",
-        DeviceLinux, DeviceSimulator, DeviceWinTbs, DefaultDevice);
+            " If <device> is '{1}', the program will use the Windows TBS interface to talk to the TPM device (for use on testing within the Windows Host).",
+        DeviceLinux, DeviceWinTbs, DefaultDevice);
     }
 
     private static void PrintUsage(OptionSet options)

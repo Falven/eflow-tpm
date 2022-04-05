@@ -5,13 +5,49 @@
       // Use IntelliSense to find out which attributes exist for C# debugging
       // Use hover for the description of the existing attributes
       // For further information visit https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md
-      "name": ".NET Core Launch (console)",
+      "name": "NV Write",
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build",
       // If you have changed target frameworks, make sure to update the program path.
-      "program": "${workspaceFolder}/nv/bin/Debug/net6.0/nv.dll",
-      "args": ["-d=tpm0", "-i=3001", "-r"],
+      "program": "${workspaceFolder}/nv/bin/Debug/net6.0/nv.exe",
+      "args": [
+        "-a=1be4e78e-01fb-4935-ac07-9128cfb18ba1",
+        "-d=tbs",
+        "-w=C:\\source\\repos\\eflow-tpm\\test-key"
+      ],
+      "cwd": "${workspaceFolder}/nv",
+      // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
+      "console": "internalConsole",
+      "stopAtEntry": false
+    },
+    {
+      // Use IntelliSense to find out which attributes exist for C# debugging
+      // Use hover for the description of the existing attributes
+      // For further information visit https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md
+      "name": "NV Read",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      // If you have changed target frameworks, make sure to update the program path.
+      "program": "${workspaceFolder}/nv/bin/Debug/net6.0/nv.exe",
+      "args": ["-a=1be4e78e-01fb-4935-ac07-9128cfb18ba1", "-d=tbs", "-r"],
+      "cwd": "${workspaceFolder}/nv",
+      // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
+      "console": "internalConsole",
+      "stopAtEntry": false
+    },
+    {
+      // Use IntelliSense to find out which attributes exist for C# debugging
+      // Use hover for the description of the existing attributes
+      // For further information visit https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md
+      "name": ".NET Core Launch tpm-write-nv",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      // If you have changed target frameworks, make sure to update the program path.
+      "program": "${workspaceFolder}/tpm-write-nv/bin/Debug/net6.0/tpm-write-nv.exe",
+      "args": ["-d=tbs", "-r"],
       "cwd": "${workspaceFolder}/nv",
       // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
       "console": "internalConsole",
