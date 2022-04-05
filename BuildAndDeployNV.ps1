@@ -13,14 +13,15 @@ if (-Not (Verify-EflowVm)) {
     exit 1
 }
 Write-Host "EFLOW installed. Building solution..." -ForegroundColor "green"
-dotnet build "nv\nv.csproj" -c "Release" -p:DeployOnBuild=true -p:MyRuntimeIdentifier=linux-x64
-dotnet build "nv\nv.csproj" -c "Release" -p:DeployOnBuild=true -p:MyRuntimeIdentifier=win-x64
+dotnet build ".\nv\nv.csproj" -c "Release" -p:DeployOnBuild=true -p:MyRuntimeIdentifier=linux-x64
+dotnet build ".\nv\nv.csproj" -c "Release" -p:DeployOnBuild=true -p:MyRuntimeIdentifier=win-x64
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Error building solution." -ForegroundColor "red"
     exit $LASTEXITCODE
 }
 Write-Host "Tar'ing binaries..." -ForegroundColor "green"
-tar -C ".\nv\bin\Release\net6.0" -cf "nv.tar" linux-x64
+cd ".\nv\bin\Release\net6.0"
+tar -cf "nv.tar" "linux-x64"
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Error tar'ing binaries." -ForegroundColor "red"
     exit $LASTEXITCODE

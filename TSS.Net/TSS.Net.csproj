@@ -16,7 +16,7 @@
 
   <!-- delay sign the assembly for Release build -->
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-    <AssemblyOriginatorKeyFile>..\35MSSharedLib1024.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>.\35MSSharedLib1024.snk</AssemblyOriginatorKeyFile>
     <DelaySign>true</DelaySign>
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
@@ -25,7 +25,7 @@
   <ItemGroup>
     <PackageReference Include="BouncyCastle.NetCore" Version="1.8.8" />
   </ItemGroup>
-<!--
+  <!--
   <ItemGroup>
     <PackageReference Include="System.Security.Cryptography.Cng" Version="4.5.0" />
   </ItemGroup>
@@ -41,12 +41,12 @@
     <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
 	<PropertyGroup Condition="$(TargetFramework).Contains('netcoreapp')) Or $(TargetFramework).Contains('netstandard'))">
   -->
-  
- <!-- 
+
+  <!-- 
   To build, use:
     dotnet build TSS.Net.csproj -r linux-x64 -f netcoreapp2.0 -c Release 
 	dotnet build TSS.Net.csproj -r linux-musl-x64 -f netcoreapp2.1 -c Release
     dotnet build TSS.Net.csproj -r linux-arm -f netcoreapp2.0 -c Release -p:PlatformTarget=ARM 
  -->
- 
+
 </Project>
