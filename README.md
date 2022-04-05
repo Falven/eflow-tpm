@@ -48,7 +48,7 @@ After parsing the arguments for the TPM device, the program reads or writes arbi
 #### Examples
 
 ```powershell
-PS C:\> .\nv.exe -a=1be4e78e-01fb-4935-ac07-9128cfb18ba1 -w=C:\\source\\repos\\eflow-tpm\\test-key -v
+PS C:\> .\nv.exe -a=1be4e78e-01fb-4935-ac07-9128cfb18ba1 -w=C:\test-key -v
 Running as Administrator.
 Writing NVIndex 3001.
 Wrote nvData length: 8
