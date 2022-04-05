@@ -233,6 +233,7 @@ class Program
         var nvDataLengthBytesLength = (ushort)nvDataLengthBytes.Length;
         NVAuth(tpm, nvHandle, nvAuth, nvIndex);
         tpm._AllowErrors().NvUndefineSpace(TpmHandle.RhOwner, nvHandle);
+        // errors out > 2048 bytes
         tpm.NvDefineSpace(
             TpmHandle.RhOwner,
             nvAuth,
@@ -241,13 +242,14 @@ class Program
                 TpmAlgId.Sha1,
                 NvAttr.Authread | NvAttr.Authwrite,
                 new byte[0],
-                (ushort)(nvDataLength + nvDataLengthBytesLength)
+                (ushort)(nvDataLengthBytesLength + nvDataLength)
             )
         );
         LogLine(String.Format("Writing NVIndex {0}.", nvIndex));
         tpm[nvAuth].NvWrite(nvHandle, nvHandle, nvDataLengthBytes, 0);
-        LogLine(String.Format("Wrote nvData length: {0}", nvDataLength));
+        // if data size > 1024 bytes, then write in chunks of 1024 bytes.
         tpm[nvAuth].NvWrite(nvHandle, nvHandle, nvData, nvDataLengthBytesLength);
+        LogLine(String.Format("Wrote nvData length: {0}", nvDataLength));
         LogLine(String.Format("Wrote nvData: {0}", BitConverter.ToString(nvData)));
     }
 

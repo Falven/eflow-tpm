@@ -13,7 +13,7 @@
       "program": "${workspaceFolder}/nv/bin/Debug/net6.0/nv.exe",
       "args": [
         "-a=1be4e78e-01fb-4935-ac07-9128cfb18ba1",
-        "-w=${workspaceFolder}\\tests\\luks.key",
+        "-w=${workspaceFolder}\\tests\\luks.bin",
         "-v"
       ],
       "cwd": "${workspaceFolder}/nv",
