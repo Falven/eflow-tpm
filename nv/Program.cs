@@ -310,6 +310,13 @@ class Program
         LogLine(String.Format("Read Data length: {0}", nvDataLength));
         var nvData = tpm[nvAuth].NvRead(nvHandle, nvHandle, nvDataLength, (ushort)sizeof(ushort));
         LogLine(String.Format("Read Bytes: {0}", BitConverter.ToString(nvData)));
+        using (var stream = Console.OpenStandardOutput())
+        {
+            using (var writer = new BinaryWriter(stream))
+            {
+                writer.Write(nvData);
+            }
+        }
     }
 
     private static void LogLine(string message)
