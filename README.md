@@ -18,6 +18,8 @@ https://dotnet.microsoft.com/en-us/download/dotnet/6.0
 
 ### Building
 
+TSS.NET\bin\TSS.Net\TSS.Net.20210628.0.0.nupkg
+
 Run the BuildAndDeployNV.ps1 script from an elevated Powershell For Windows session to build and deploy the cli for both Windows and EFLOW.
 
 The cli will be available from Windows in `C:\path\to\your\repo\eflow-tpm\nv\bin\Release\net6.0\win-x64`
@@ -48,7 +50,7 @@ After parsing the arguments for the TPM device, the program reads or writes arbi
 #### Examples
 
 ```powershell
-PS C:\> .\nv.exe -a=1be4e78e-01fb-4935-ac07-9128cfb18ba1 -w=C:\test-key -v
+PS C:\> .\nv.exe -a=1be4e78e-01fb-4935-ac07-9128cfb18ba1 -w=C:\\source\\repos\\eflow-tpm\\test-key -v
 Running as Administrator.
 Writing NVIndex 3001.
 Wrote nvData length: 8
