@@ -285,6 +285,6 @@ After parsing the arguments for the TPM device, the program reads or writes arbi
 
   Usage: nv [OPTIONS]");
         options.WriteOptionDescriptions(Console.Out);
-        Console.WriteLine("\n  Example: nv -a=1be4e78e-01fb-4935-ac07-9128cfb18ba1 -d=tbs -r -v");
+        Console.WriteLine("\n  Example: nv -a=1be4e78e-01fb-4935-ac07-9128cfb18ba1 -r -v");
     }
 }
