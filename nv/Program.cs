@@ -43,6 +43,8 @@ class Program
     /// </summary>
     private const int DefaultSimulatorPort = 2321;
 
+    private const int DefaultAuthValueSize = 32;
+
     static int Main(string[] args)
     {
         string? device = null;
@@ -210,12 +212,11 @@ class Program
     {
         ownerAuth = new byte[0];
 
-        // open context
         TbsWrapper.TBS_CONTEXT_PARAMS contextParams;
-        UIntPtr tbsContext = UIntPtr.Zero;
+        var tbsContext = UIntPtr.Zero;
         contextParams.Version = TbsWrapper.TBS_CONTEXT_VERSION.TWO;
         contextParams.Flags = TbsWrapper.TBS_CONTEXT_CREATE_FLAGS.IncludeTpm20;
-        TbsWrapper.TBS_RESULT result = TbsWrapper.NativeMethods.Tbsi_Context_Create(ref contextParams, ref tbsContext);
+        var result = TbsWrapper.NativeMethods.Tbsi_Context_Create(ref contextParams, ref tbsContext);
 
         if (result != TbsWrapper.TBS_RESULT.TBS_SUCCESS)
         {
@@ -226,7 +227,6 @@ class Program
             return false;
         }
 
-        // get owner auth size
         uint ownerAuthSize = 0;
         TbsWrapper.TBS_OWNERAUTH_TYPE ownerType = TbsWrapper.TBS_OWNERAUTH_TYPE.TBS_OWNERAUTH_TYPE_STORAGE_20;
         result = TbsWrapper.NativeMethods.Tbsi_Get_OwnerAuth(tbsContext, ownerType, ownerAuth, ref ownerAuthSize);
@@ -242,7 +242,7 @@ class Program
                 return false;
             }
         }
-        // get owner auth itself
+
         ownerAuth = new byte[ownerAuthSize];
         result = TbsWrapper.NativeMethods.Tbsi_Get_OwnerAuth(tbsContext, ownerType, ownerAuth, ref ownerAuthSize);
         if (result != TbsWrapper.TBS_RESULT.TBS_SUCCESS)
@@ -256,14 +256,14 @@ class Program
         return true;
     }
 
-    private static void NVWrite(Tpm2 tpm, int index, string path)
+    private static void NVWrite(Tpm2 tpm, int nvIndex, string path)
     {
         if (tpm._GetUnderlyingDevice().GetType() != typeof(TbsDevice))
         {
             return;
         }
 
-        TpmHandle nvHandle = TpmHandle.NV(index);
+        TpmHandle nvHandle = TpmHandle.NV(nvIndex);
         //
         // The NV auth value is required to read and write the NV slot after it has been
         // created. Because this test is supposed to be used in different conditions:
@@ -276,8 +276,7 @@ class Program
         // AuthValue nvAuth = AuthValue.FromRandom(32);
         // which requires storage of the authorization value for reads.
         //
-        AuthValue nvAuth = new AuthValue(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 });
-        var nvData = new byte[] { 7, 6, 5, 4, 3, 2, 1, 0 };
+        AuthValue nvAuth = AuthValue.FromRandom(DefaultAuthValueSize);
 
         var identity = WindowsIdentity.GetCurrent();
         var principal = new WindowsPrincipal(identity);
@@ -336,8 +335,8 @@ class Program
                 {
                     if (e.RawResponse == TpmRc.NvDefined)
                     {
-                        index++;
-                        nvHandle = TpmHandle.NV(index);
+                        nvIndex++;
+                        nvHandle = TpmHandle.NV(nvIndex);
                         Console.WriteLine("NV index already taken, trying next.");
                         failed = true;
                     }
@@ -356,6 +355,8 @@ class Program
                 // 
             } while (failed);
 
+            var nvData = File.ReadAllBytes(path);
+
             //
             // Now that NvDefineSpace succeeded, write some random data (nvData) to
             // nvIndex. Note that NvDefineSpace defined the NV slot to be 32 bytes,
@@ -363,54 +364,26 @@ class Program
             // If more data has to be written to the NV slot, NvDefineSpace should
             // be adjusted accordingly.
             // 
-            Console.WriteLine("Writing NVIndex {0}.", index);
-            tpm[nvAuth].NvWrite(nvHandle, nvHandle, nvData, 0);
-            Console.WriteLine("Written: {0}", BitConverter.ToString(nvData));
-        }
-
-        //
-        // Read the data back.
-        // 
-        Console.WriteLine("Reading NVIndex {0}.", index);
-        byte[] nvRead = tpm[nvAuth].NvRead(nvHandle, nvHandle, (ushort)nvData.Length, 0);
-        Console.WriteLine("Read: {0}", BitConverter.ToString(nvRead));
-
-        //
-        // Optional: compare if data read from NV slot is the same as data 
-        // written to it.
-        // We can only compare if running as admin, because the data has been
-        // generated with admin account.
-        // 
-        if (principal.IsInRole(WindowsBuiltInRole.Administrator))
-        {
-            bool correct = nvData.SequenceEqual(nvRead);
-            if (!correct)
-            {
-                throw new Exception("NV data was incorrect.");
-            }
+            Console.WriteLine("Writing NVIndex {0}.", nvIndex);
+            var nvLengthBytes = BitConverter.GetBytes(nvData.Length);
+            tpm[nvAuth].NvWrite(nvHandle, nvHandle, nvLengthBytes, 0);
+            Console.WriteLine("Wrote nvData length: {0}", BitConverter.ToString(nvData));
+            tpm[nvAuth].NvWrite(nvHandle, nvHandle, nvData, (ushort)(nvLengthBytes.Length - 1));
+            Console.WriteLine("Wrote nvData: {0}", BitConverter.ToString(nvData));
         }
 
         Console.WriteLine("NV access complete.");
-
-        if (principal.IsInRole(WindowsBuiltInRole.Administrator))
-        {
-            //
-            // Optional: clean up.
-            // If NvIndex should stick around, skip this code.
-            // 
-            //tpm.NvUndefineSpace(TpmHandle.RhOwner, nvHandle);
-        }
     }
 
     private static void NVRead(Tpm2 tpm, int index)
     {
         var nvHandle = TpmHandle.NV(index);
-        var nvAuth = new AuthValue();
+        var nvAuth = AuthValue.FromRandom(DefaultAuthValueSize);
         Console.WriteLine("Reading NVIndex {0}.", index);
         var nvLengthBytes = tpm[nvAuth].NvRead(nvHandle, nvHandle, (ushort)sizeof(ushort), 0);
         var nvLength = BitConverter.ToUInt16(nvLengthBytes);
         Console.WriteLine("Read Data length: {0}\nReading key.", nvLength);
-        var nvData = tpm[nvAuth].NvRead(nvHandle, nvHandle, ushort.MaxValue, nvLength);
+        var nvData = tpm[nvAuth].NvRead(nvHandle, nvHandle, ushort.MaxValue, (ushort)(nvLength - 1));
         Console.WriteLine("Read Bytes: {0}", BitConverter.ToString(nvData));
     }
 
