@@ -63,6 +63,12 @@ class Program
         List<string> extra;
         try
         {
+            if (args.Length == 0)
+            {
+                PrintUsage(options);
+                return 0;
+            }
+
             // parse the command line
             extra = options.Parse(args);
 
@@ -403,5 +409,6 @@ After parsing the arguments for the TPM device, the program reads or writes arbi
 
   Usage: nv [OPTIONS]");
         options.WriteOptionDescriptions(Console.Out);
+        Console.WriteLine("\n  Example: nv -d=tpm0 -i=3001 -r");
     }
 }
