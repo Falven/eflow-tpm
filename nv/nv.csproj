@@ -9,8 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\TSS.Net\TSS.Net.csproj" />
     <PackageReference Include="Mono.Options" Version="6.12.0.148" />
-    <PackageReference Include="TSS.Net" Version="20210628.0.0" />
   </ItemGroup>
 
 </Project>
