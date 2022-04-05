@@ -13,7 +13,6 @@
       "program": "${workspaceFolder}/nv/bin/Debug/net6.0/nv.exe",
       "args": [
         "-a=1be4e78e-01fb-4935-ac07-9128cfb18ba1",
-        "-d=tbs",
         "-w=C:\\source\\repos\\eflow-tpm\\test-key",
         "-v"
       ],
@@ -32,7 +31,7 @@
       "preLaunchTask": "build",
       // If you have changed target frameworks, make sure to update the program path.
       "program": "${workspaceFolder}/nv/bin/Debug/net6.0/nv.exe",
-      "args": ["-a=1be4e78e-01fb-4935-ac07-9128cfb18ba1", "-d=tbs", "-r", "-v"],
+      "args": ["-a=1be4e78e-01fb-4935-ac07-9128cfb18ba1", "-r", "-v"],
       "cwd": "${workspaceFolder}/nv",
       // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
       "console": "internalConsole",

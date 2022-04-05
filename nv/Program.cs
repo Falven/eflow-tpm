@@ -5,26 +5,6 @@ using Tpm2Lib;
 
 class Program
 {
-    /// <summary>
-    /// Defines the argument to use to have this program use a Linux TPM device
-    /// file or TPM access broker to communicate with a TPM 2.0 device.
-    ///
-    /// NOTE: Use this device in order to communicate to the EFLOW VM
-    /// </summary>
-    private const string DeviceLinux = "tpm0";
-
-    /// <summary>
-    /// Defines the argument to use to have this program use the Windows TBS
-    /// API to communicate with a TPM 2.0 device.
-    /// Use this device if you are testing the TPM Read functionality on the Windows host.
-    /// </summary>
-    private const string DeviceWinTbs = "tbs";
-
-    /// <summary>
-    /// The default connection to use for communication with the TPM.
-    /// </summary>
-    private const string DefaultDevice = DeviceLinux;
-
     private const int DefaultNVIndex = 3001;
 
     private static bool verbose = false;
@@ -32,14 +12,12 @@ class Program
     static int Main(string[] args)
     {
         Guid? authValue = null;
-        string? device = DefaultDevice;
         int index = DefaultNVIndex;
         string? path = null;
         bool read = false;
         bool help = false;
         var options = new OptionSet {
             { "a|authvalue=", "Authorization GUID used for accessing TPM device memory.", a => authValue = Guid.Parse(a) },
-            { "d|device:", GetDeviceOptions(), d => device = d },
             { "i|index:", String.Format("The index in authorized TPM memory to read from or write to (Defaults to {0}).", DefaultNVIndex), (int i) => index = i },
             { "w|write:", "Fully qualified path to a file containing data to write to TPM device memory.", w => path = w },
             { "r|read", "Whether to read from the TPM device.", r => read = true },
@@ -71,24 +49,17 @@ class Program
             }
 
             Tpm2Device tpmDevice;
-            switch (device)
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                case DeviceWinTbs:
-                    if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                    {
-                        throw new InvalidOperationException(String.Format("Device {0} is not supported for this platform.", device));
-                    }
-                    tpmDevice = new TbsDevice();
-                    break;
-                case DeviceLinux:
-                    if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                    {
-                        throw new InvalidOperationException(String.Format("Device {0} is not supported for this platform.", device));
-                    }
-                    tpmDevice = new LinuxTpmDevice();
-                    break;
-                default:
-                    throw new InvalidOperationException("Invalid device option -d.\n" + GetDeviceOptions());
+                tpmDevice = new TbsDevice();
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                tpmDevice = new LinuxTpmDevice();
+            }
+            else
+            {
+                throw new InvalidOperationException("Unsupported platform.");
             }
 
             tpmDevice.Connect();
@@ -323,18 +294,10 @@ class Program
         }
     }
 
-    private static string GetDeviceOptions()
-    {
-        return String.Format("Required: Can be '{0}' or '{1}' (Defaults to '{2}')." +
-            " If <device> is '{0}', the program will connect to the TPM via the TPM2 Access Broker on the EFLOW VM (for use for reading from the EFLOW VM)" +
-            " If <device> is '{1}', the program will use the Windows TBS interface to talk to the TPM device (for use for writing or reading from the Windows host).",
-        DeviceLinux, DeviceWinTbs, DefaultDevice);
-    }
-
     private static void PrintUsage(OptionSet options)
     {
         Console.WriteLine(@"This program reads or writes to a TPM 2.0 device.
-After parsing the arguments for the TPM device, the program reads or writes arbitrary data to the provided NV index.
+After parsing the arguments for the TPM device, the program reads or writes arbitrary data to or from the provided NV index.
 
   Usage: nv [OPTIONS]");
         options.WriteOptionDescriptions(Console.Out);
