@@ -8,11 +8,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Directory.Build.props = Directory.Build.props
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "tpm-write-nv", "tpm-write-nv\tpm-write-nv.csproj", "{0E20F24D-DF39-473A-B5A8-AD63DA1BC358}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "tpm-read-nv", "tpm-read-nv\tpm-read-nv.csproj", "{D5D760DD-FE6C-4C39-BF10-B9E8F3D9A6D1}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nv", "nv\nv.csproj", "{0942FD05-C88F-4A90-819F-C0B2B433B19B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nv", "nv\nv.csproj", "{0942FD05-C88F-4A90-819F-C0B2B433B19B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -20,14 +16,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{0E20F24D-DF39-473A-B5A8-AD63DA1BC358}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0E20F24D-DF39-473A-B5A8-AD63DA1BC358}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0E20F24D-DF39-473A-B5A8-AD63DA1BC358}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0E20F24D-DF39-473A-B5A8-AD63DA1BC358}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D5D760DD-FE6C-4C39-BF10-B9E8F3D9A6D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D5D760DD-FE6C-4C39-BF10-B9E8F3D9A6D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D5D760DD-FE6C-4C39-BF10-B9E8F3D9A6D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D5D760DD-FE6C-4C39-BF10-B9E8F3D9A6D1}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0942FD05-C88F-4A90-819F-C0B2B433B19B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0942FD05-C88F-4A90-819F-C0B2B433B19B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0942FD05-C88F-4A90-819F-C0B2B433B19B}.Release|Any CPU.ActiveCfg = Release|Any CPU
