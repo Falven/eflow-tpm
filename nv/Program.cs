@@ -25,7 +25,7 @@ class Program
             { "h|help", h => help = true },
         };
 
-        List<string> extra;
+        List<string> extraOptions;
         try
         {
             if (args.Length == 0)
@@ -34,8 +34,7 @@ class Program
                 return 0;
             }
 
-            // parse the command line
-            extra = options.Parse(args);
+            extraOptions = options.Parse(args);
 
             if (help)
             {
@@ -166,13 +165,11 @@ class Program
     static bool GetOwnerAuthFromOS(out byte[] ownerAuth)
     {
         ownerAuth = new byte[0];
-
         TbsWrapper.TBS_CONTEXT_PARAMS contextParams;
         var tbsContext = UIntPtr.Zero;
         contextParams.Version = TbsWrapper.TBS_CONTEXT_VERSION.TWO;
         contextParams.Flags = TbsWrapper.TBS_CONTEXT_CREATE_FLAGS.IncludeTpm20;
         var result = TbsWrapper.NativeMethods.Tbsi_Context_Create(ref contextParams, ref tbsContext);
-
         if (result != TbsWrapper.TBS_RESULT.TBS_SUCCESS)
         {
             return false;
@@ -181,7 +178,6 @@ class Program
         {
             return false;
         }
-
         uint ownerAuthSize = 0;
         TbsWrapper.TBS_OWNERAUTH_TYPE ownerType = TbsWrapper.TBS_OWNERAUTH_TYPE.TBS_OWNERAUTH_TYPE_STORAGE_20;
         result = TbsWrapper.NativeMethods.Tbsi_Get_OwnerAuth(tbsContext, ownerType, ownerAuth, ref ownerAuthSize);
@@ -197,7 +193,6 @@ class Program
                 return false;
             }
         }
-
         ownerAuth = new byte[ownerAuthSize];
         result = TbsWrapper.NativeMethods.Tbsi_Get_OwnerAuth(tbsContext, ownerType, ownerAuth, ref ownerAuthSize);
         if (result != TbsWrapper.TBS_RESULT.TBS_SUCCESS)
@@ -205,9 +200,7 @@ class Program
             Console.WriteLine(Globs.GetResourceString("Failed to get ownerAuth."));
             return false;
         }
-
         TbsWrapper.NativeMethods.Tbsip_Context_Close(tbsContext);
-
         return true;
     }
 
@@ -218,15 +211,6 @@ class Program
         if (principal.IsInRole(WindowsBuiltInRole.Administrator))
         {
             LogLine("Running as Administrator.");
-
-            //
-            // AuthValue encapsulates an authorization value: essentially a byte-array.
-            // OwnerAuth is the owner authorization value of the TPM-under-test.  We
-            // assume that it (and other) auths are set to the default (null) value.
-            // If running on a real TPM, which has been provisioned by Windows, this
-            // value will be different. An administrator can retrieve the owner
-            // authorization value from the registry.
-            //
             byte[] ownerAuth;
             if (GetOwnerAuthFromOS(out ownerAuth))
             {
