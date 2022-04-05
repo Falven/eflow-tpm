@@ -323,8 +323,8 @@ class Program
     private static string GetDeviceOptions()
     {
         return String.Format("Required: Can be '{0}' or '{1}' (Defaults to '{2}')." +
-            " If <device> is '{0}', the program will connect to the TPM via the TPM2 Access Broker on the EFLOW VM." +
-            " If <device> is '{1}', the program will use the Windows TBS interface to talk to the TPM device (for use on testing within the Windows Host).",
+            " If <device> is '{0}', the program will connect to the TPM via the TPM2 Access Broker on the EFLOW VM (for use for reading from the EFLOW VM)" +
+            " If <device> is '{1}', the program will use the Windows TBS interface to talk to the TPM device (for use for writing or reading from the Windows host).",
         DeviceLinux, DeviceWinTbs, DefaultDevice);
     }
 
@@ -335,6 +335,6 @@ After parsing the arguments for the TPM device, the program reads or writes arbi
 
   Usage: nv [OPTIONS]");
         options.WriteOptionDescriptions(Console.Out);
-        Console.WriteLine("\n  Example: nv -d=tpm0 -i=3001 -r");
+        Console.WriteLine("\n  Example: nv -a=1be4e78e-01fb-4935-ac07-9128cfb18ba1 -d=tbs -r -v");
     }
 }
