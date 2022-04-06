@@ -72,4 +72,4 @@ Read NVData: 31-32-33-34-35-36-37-38
 
 Does not work from Powershell Core.
 
-Weird internal print statemtents on Linux.
+Weird internal print statements on Linux.
