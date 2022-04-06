@@ -53,16 +53,17 @@ After parsing the arguments for the TPM device, the program reads or writes arbi
 PS C:\> .\nv.exe -a=1be4e78e-01fb-4935-ac07-9128cfb18ba1 -w=C:\\source\\repos\\eflow-tpm\\test-key -v
 Running as Administrator.
 Writing NVIndex 3001.
-Wrote nvData length: 8
-Wrote nvData: 31-32-33-34-35-36-37-38
+Wrote NVData length: 8
+Wrote NVData: 31-32-33-34-35-36-37-38
 PS C:\> .\nv.exe -a=1be4e78e-01fb-4935-ac07-9128cfb18ba1 -r -v
 Reading NVIndex 3001.
-Read Data length: 8
-Read Bytes: 31-32-33-34-35-36-37-38
+Read NVData length: 8
+Read NVData: 31-32-33-34-35-36-37-38
 12345678
 ```
 
 ### Known issues
 
 Does not work from Powershell Core.
+
 Weird internal print statemtents on Linux.

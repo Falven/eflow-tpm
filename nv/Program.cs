@@ -249,8 +249,8 @@ class Program
         tpm[nvAuth].NvWrite(nvHandle, nvHandle, nvDataLengthBytes, 0);
         // if data size > 1024 bytes, then write in chunks of 1024 bytes.
         tpm[nvAuth].NvWrite(nvHandle, nvHandle, nvData, nvDataLengthBytesLength);
-        LogLine(String.Format("Wrote nvData length: {0}", nvDataLength));
-        LogLine(String.Format("Wrote nvData: {0}", BitConverter.ToString(nvData)));
+        LogLine(String.Format("Wrote NVData length: {0}", nvDataLength));
+        LogLine(String.Format("Wrote NVData: {0}", BitConverter.ToString(nvData)));
     }
 
     private static void NVRead(Tpm2 tpm, Guid authValue, int nvIndex)
@@ -260,9 +260,9 @@ class Program
         LogLine(String.Format("Reading NVIndex {0}.", nvIndex));
         var nvDataLengthBytes = tpm[nvAuth].NvRead(nvHandle, nvHandle, (ushort)sizeof(ushort), 0);
         var nvDataLength = BitConverter.ToUInt16(nvDataLengthBytes);
-        LogLine(String.Format("Read Data length: {0}", nvDataLength));
+        LogLine(String.Format("Read NVData length: {0}", nvDataLength));
         var nvData = tpm[nvAuth].NvRead(nvHandle, nvHandle, nvDataLength, (ushort)sizeof(ushort));
-        LogLine(String.Format("Read Bytes: {0}", BitConverter.ToString(nvData)));
+        LogLine(String.Format("Read NVData: {0}", BitConverter.ToString(nvData)));
         using (var stream = Console.OpenStandardOutput())
         {
             using (var writer = new BinaryWriter(stream))
@@ -283,7 +283,7 @@ class Program
     private static void PrintUsage(OptionSet options)
     {
         Console.WriteLine(@"This program reads or writes to a TPM 2.0 device.
-After parsing the arguments for the TPM device, the program reads or writes arbitrary data to or from the provided NV index. As of 1.0, this program only supports writing and reading from Windows and only reading from EFLOW/Linux.
+After parsing the arguments for the TPM device, the program reads or writes arbitrary data to or from the provided NVIndex. As of 1.0, this program supports both writing and reading from Windows and only reading from EFLOW/Linux.
 
   Usage: nv [OPTIONS]");
         options.WriteOptionDescriptions(Console.Out);
