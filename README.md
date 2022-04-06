@@ -1,29 +1,35 @@
 # nv cli
 
-A cli for reading and writing to EFLOW TPM.
+A cli that reads or writes to a TPM 2.0 device.
+After parsing the arguments for the TPM device, the program reads or writes arbitrary data to or from the provided NVIndex.
+As of 1.0, this program supports both writing and reading from Windows and only reading from EFLOW/Linux.
 
 ## Requirements
 
-EFLOW and .NET 6 SDK
-
-### EFLOW
-
-https://docs.microsoft.com/en-us/azure/iot-edge/how-to-provision-single-device-linux-on-windows-x509?view=iotedge-2020-11&tabs=azure-portal%2Cpowershell#install-iot-edge
-
-Run EnableEFLOWTPM.ps1 from an elevated Powershell For Windows session to enable the TPM.
+.NET 6 SDK for building
+Optionally, an EFLOW VM to take advantage of the CLI from within EFLOW.
 
 ### .NET Core 6
 
+Follow well documented steps for setting up .NET 6.
 https://dotnet.microsoft.com/en-us/download/dotnet/6.0
+
+### EFLOW
+
+Follow the section: 'Install IoT Edge' and optionally all others to set up an EFLOW VM.
+
+https://docs.microsoft.com/en-us/azure/iot-edge/how-to-provision-single-device-linux-on-windows-x509?view=iotedge-2020-11&tabs=azure-portal%2Cpowershell#install-iot-edge
+
+After setting up EFLOW the following article lists all available powershell functions for EFLOW.
+
+https://docs.microsoft.com/en-us/azure/iot-edge/reference-iot-edge-for-linux-on-windows-functions?view=iotedge-2020-11#start-eflowvm
+
+To finish setup, run EnableEFLOWTPM.ps1 from an elevated Powershell For Windows session to enable the TPM on the vm.
 
 ### Building
 
-TSS.NET\bin\TSS.Net\TSS.Net.20210628.0.0.nupkg
-
 Run the BuildAndDeployNV.ps1 script from an elevated Powershell For Windows session to build and deploy the cli for both Windows and EFLOW.
-
-The cli will be available from Windows in `C:\path\to\your\repo\eflow-tpm\nv\bin\Release\net6.0\win-x64`
-The cli will be available from the EFLOW VM's home directory in a tar.
+The cli will be available from Windows in `C:\path\to\your\repo\eflow-tpm\nv\bin\Release\net6.0\win-x64` and the cli will be available from the EFLOW VM's home directory in a tar.
 
 ### Running
 
